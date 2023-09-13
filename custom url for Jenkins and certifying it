@@ -1,0 +1,67 @@
+ 
+setup amazon ec2 instance and run the following commands
+yum update –y
+      wget -O /etc/yum.repos.d/jenkins.repo     https://pkg.jenkins.io/redhat-stable/jenkins.repo
+    sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+      yum upgrade
+     amazon-linux-extras install java-openjdk11 -y
+     yum install jenkins -y
+     systemctl enable jenkins
+    systemctl start jenkins
+    systemctl status jenkins
+   cat /var/lib/jenkins/secrets/initialAdminPassword (jenkins) , put domain name in url when configuring
+       sudo amazon-linux-extras install nginx1 -y
+   sudo systemctl start nginx
+    sudo systemctl enable nginx
+   mkdir sites-enabled in /nginx 
+   mkdir sites-available in/nginx
+make sure this line is pasted in nginx.conf     include /etc/nginx/sites-enabled/*;
+   vi nginx.conf (remove server lines 38 to 53 roughly) -cross check
+   sudo vi /etc/nginx/sites-available/jenkinsproj.nl (jenkinsproj.nl) is my domain name 
+sudo vi /etc/nginx/sites-available/jenkinsproj.nl
+
+Paste in the following configuration block, which is similar to the default, but updated for our new directory and domain name:
+
+Paste the below (replace your domain)
+
+upstream jenkins{
+    server 127.0.0.1:8080;
+}
+
+server{
+    listen      80;
+    server_name jenkinsproj.nl;
+
+    access_log  /var/log/nginx/jenkins.access.log;
+    error_log   /var/log/nginx/jenkins.error.log;
+
+    proxy_buffers 16 64k;
+    proxy_buffer_size 128k;
+
+    location / {
+        proxy_pass  http://jenkins;
+        proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+        proxy_redirect off;
+
+        proxy_set_header    Host            $host;
+        proxy_set_header    X-Real-IP       $remote_addr;
+        proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header    X-Forwarded-Proto https;
+    }
+
+}
+Next, let’s enable the file by creating a link from it to the sites-enabled directory, which Nginx reads from during startup:
+Run from shell prompt (replace your domain)
+
+sudo ln -s /etc/nginx/sites-available/jenkinsproj.nl /etc/nginx/sites-enabled/
+Next, test to make sure that there are no syntax errors in any of your Nginx files:
+Run from shell prompt
+sudo nginx -t
+custom dns website made for jenkins should work
+just incase if you missed pasting url for jenkins, you can paste here jenkins.model.JenkinsLocationConfiguration.xml (url file in jenkins)  
+  yum update
+ yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+   sudo yum install python3-certbot-apache mod_ssl
+sudo yum install certbot python-certbot-nginx
+  sudo certbot --nginx -d jenkinsproj.nl
+  systemctl restart nginx
